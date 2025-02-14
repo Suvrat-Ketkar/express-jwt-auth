@@ -5,17 +5,7 @@ import { setAuthCookies } from "../utils/cookies.js";
 import { CREATED } from "../constants/http.js";
 
 
-const registerSchema = z.object({
-    email: z.string().email().min(1).max(255),
-    password: z.string().min(6).max(255),
-    confirmPassword: z.string().min(6).max(255),
-    userAgent: z.string().optional(),
-    
-}).refine(
-    (data) => data.password === data.confirmPassword, {
-        message: "Passwords do not match",
-        path: ["confirmPassword"],
-    });
+import { registerSchema, loginSchema } from "./auth.schemas.js";
 
 
 export const registerHandler = catchErrors(async (req, res, next) => {
@@ -30,4 +20,13 @@ export const registerHandler = catchErrors(async (req, res, next) => {
         return setAuthCookies({res, accessToken, refreshToken})
         .status(CREATED)
         .json(user)
+});
+
+export const loginHandler = catchErrors(async (req, res, next) => { 
+    const request = loginSchema.parse({
+        ...req.body,
+        userAgent: req.headers['user-agent'],
+    });
+
+    const {} = await loginUser(request);
 });

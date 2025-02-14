@@ -3,15 +3,25 @@ import UserModel from "../models/user.model.js";
 import VerificationCodeModel from "../models/verificationCode.model.js";
 import { oneYearFromNow } from "../utils/date.js";
 import jwt from "jsonwebtoken";
-
 import { JWT_REFRESH_SECRET } from '../constants/env.js';
+import appAssert from "../utils/appAssert.js";
+import { CONFLICT } from "../constants/http.js";
+
 export const createAccount = async (data) => {
     // Verify email is not taken
-    const existingUser = await UserModel.exists({ email: data.email });
+    const existingUser = await UserModel.exists({ 
+      email: data.email
+    });
+
+    appAssert(
+      !existingUser,
+      CONFLICT,
+      "Email is already in use",
+    )
   
-    if (existingUser) {
-      throw new Error("Email is already in use");
-    }
+    // if (existingUser) {
+    //   throw new Error("Email is already in use");
+    // }
 
     // create user
     const user = await UserModel.create(
@@ -52,6 +62,15 @@ export const createAccount = async (data) => {
 
     )
   
-    return { user, accessToken, refreshToken };
+    return { 
+      user: user.omitPassword(), // Call on the user instance
+      accessToken,
+      refreshToken
+    };
+    
   };
   
+
+  export const loginUser = async ({email,password,userAgent}) => {
+    
+   }

@@ -23,6 +23,11 @@ userSchema.methods.comparePassword = async function (val) {
     return compareValue(val, this.password);
     
 }
+userSchema.methods.omitPassword = function () {
+    const user = this.toObject();
+    delete user.password;
+    return user;
 
+}
 const UserModel = mongoose.model("User", userSchema);
 export default UserModel;
