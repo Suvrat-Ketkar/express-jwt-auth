@@ -1,12 +1,13 @@
 import catchErrors from "../utils/catchErrors.js";
-import { z } from "zod";
 import { createAccount } from "../services/auth.service.js";
 import { setAuthCookies } from "../utils/cookies.js";
 import { CREATED } from "../constants/http.js";
 import { loginUser } from "../services/auth.service.js";
 import { OK } from "../constants/http.js"; 
 import { registerSchema, loginSchema } from "./auth.schemas.js";
-
+import { verifyToken } from "../utils/jwt.js";
+import SessionModel from "../models/session.model.js";
+import { clearAuthCookies } from "../utils/cookies.js";
 // Controller function to handle user registration
 export const registerHandler = catchErrors(async (req, res, next) => {
     // Validate request body against schema
@@ -40,3 +41,18 @@ export const loginHandler = catchErrors(async (req, res, next) => {
         message:"Login Successful",
     });
 });
+
+export const logoutHandler = catchErrors(async (req, res) => {
+    const accessToken = req.cookies.accessToken;
+    const {payload} = verifyToken(accessToken)
+    // console.log(payload);
+
+    if(payload) {
+        await SessionModel.findByIdAndDelete(payload.sessionId);
+    }
+
+    return clearAuthCookies(res)
+    .status(OK).json({
+        message:"Logout Successful",
+    })
+ });

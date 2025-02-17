@@ -27,36 +27,31 @@ export const createAccount = async (data) => {
       password: data.password,
     }); // Create a new user with provided credentials
 
+    const userId = user._id;
+
     const verificationCode = await VerificationCodeModel.create({ 
-      userId: user._id,
+      userId,
       type: "EmailVerification",
       expiresAt: oneYearFromNow(), 
     }) // Generate and save a verification code for email validation
     
     // create session
     const session = await SessionModel.create({
-      userId: user._id,
+      userId,
       userAgent: data.userAgent,
     }); // Create a new session for the newly registered user
 
-    const refreshToken = jwt.sign(
-      { sessionId: session._id},
-      JWT_REFRESH_SECRET, {
-        audience: ['user'],
-        expiresIn: "30d",
-      }
-    ); // Generate a refresh token with a 30-day expiration
-    
-    const accessToken = jwt.sign(
-      { userId: user._id,
-        sessionId: session._id,
-      }, 
-      JWT_REFRESH_SECRET,
+    const refreshToken = signToken(
       {
-        audience: ['user'], 
-        expiresIn: "15m", 
-      }
-    ); // Generate an access token with a 15-minute expiration
+        sessionId: session._id,
+      },
+      refreshTokenSignOptions
+    );// Generate a refresh token with a 30-day expiration
+    
+    const accessToken = signToken({
+      userId,
+      sessionId: session._id,
+    }); // Generate an access token with a 15-minute expiration
     
     return { 
       user: user.omitPassword(), // Call on the user instance to remove sensitive data
@@ -87,24 +82,17 @@ export const loginUser = async ({email,password,userAgent}) => {
       sessionId: session._id,
     }
     
-    const refreshToken = jwt.sign(
-      sessionInfo,
-      JWT_REFRESH_SECRET, {
-        audience: ['user'],
-        expiresIn: "30d",
-      }
+    const refreshToken = signToken(
+      {
+        sessionId: session._id,
+      },
+      refreshTokenSignOptions
     ); // Generate a refresh token with a 30-day expiration
     
-    const accessToken = jwt.sign(
-      { ...sessionInfo,
-        userId: user._id,
-      }, 
-      JWT_REFRESH_SECRET,
-      {
-        audience: ['user'], 
-        expiresIn: "15m", 
-      }
-    ); // Generate an access token with a 15-minute expiration
+    const accessToken = signToken({
+      userId,
+      sessionId: session._id,
+    }); // Generate an access token with a 15-minute expiration
     
     return { 
       user: user.omitPassword(), // Call on the user instance to remove sensitive data
