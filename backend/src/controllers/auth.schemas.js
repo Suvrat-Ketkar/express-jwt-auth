@@ -18,4 +18,6 @@ export const registerSchema = loginSchema.extend({
     (data) => data.password === data.confirmPassword, {
         message: "Passwords do not match",
         path: ["confirmPassword"],
-    });
+});
+
+export const verificationCodeSchema = z.string().min(1).max(24);
