@@ -4,11 +4,12 @@ import { getaAccessTokenCookieOptions, setAuthCookies, getRefreshTokenCookieOpti
 import { CREATED } from "../constants/http.js";
 import { loginUser } from "../services/auth.service.js";
 import { OK,UNAUTHORIZED } from "../constants/http.js"; 
-import { registerSchema, loginSchema, verificationCodeSchema } from "./auth.schemas.js";
+import { registerSchema, loginSchema, verificationCodeSchema, emailSchema } from "./auth.schemas.js";
 import { verifyToken } from "../utils/jwt.js";
 import SessionModel from "../models/session.model.js";
 import { clearAuthCookies } from "../utils/cookies.js";
 import appAssert from "../utils/appAssert.js";
+import { sendPasswordResetEmail } from "../services/auth.service.js";
 // Controller function to handle user registration
 export const registerHandler = catchErrors(async (req, res, next) => {
     // Validate request body against schema
@@ -79,7 +80,7 @@ export const logoutHandler = catchErrors(async (req, res) => {
 
  })
 
- export const verifyEmailHandler = catchErrors(async (req, res) => {
+export const verifyEmailHandler = catchErrors(async (req, res) => {
     const verificationCode = verificationCodeSchema.parse(req.params.code);
 
     await verifyEmail(verificationCode);
@@ -91,4 +92,17 @@ export const logoutHandler = catchErrors(async (req, res) => {
     });
 
 
- })
+});
+
+export const sendPasswordResetHandler = catchErrors(async (req, res) => {   
+    const email = emailSchema.parse(req.body.email);
+    
+    await sendPasswordResetEmail(email);
+
+    return res
+    .status(OK)
+    .json({
+        message:"Password reset email sent successfully",
+    })
+});
+
