@@ -9,6 +9,7 @@ import { signToken, refreshTokenSignOptions, accessTokenSignOptions, verifyToken
 import { sendMail } from "../utils/sendMail.js";
 import { getPasswordResetTemplate, getVerifyEmailTemplate } from "../utils/emailTemplates.js";
 import { get } from "mongoose";
+import { hashValue } from "../utils/bcrypt.js";
 
 export const createAccount = async (data) => {
     // Verify email is not taken
@@ -246,3 +247,34 @@ export const sendPasswordResetEmail = async (email) => {
   };
 
 }
+
+export const resetPassword = async({verificationCode,password}) => {
+
+  // get verification code
+  const validCode = await VerificationCodeModel.findOne({
+    _id:verificationCode,
+    type: "PasswordReset",
+    expiresAt: { $gt: new Date() },
+  });
+
+  appAssert(validCode,NOT_FOUND,"Invalid or expired verification code");
+
+  const updatedUser = await UserModel.findOneAndUpdate(
+    validCode.userId,
+    {
+      password: await hashValue(password),
+    })
+
+    appAssert(updatedUser, INTERNAL_SERVER_ERROR, "Failed to reset password");
+
+    await validCode.deleteOne();
+
+    await SessionModel.deleteMany({
+      userId: updatedUser._id,
+    });
+
+    return {
+      user: updatedUser.omitPassword(),
+    };
+}
+

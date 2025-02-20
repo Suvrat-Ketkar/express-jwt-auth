@@ -8,6 +8,8 @@ import errorHandler from './middleware.js/errorHandler.js';
 import catchErrors from './utils/catchErrors.js';
 import { OK } from './constants/http.js';
 import authRoutes from './routes/auth.route.js';
+import authenticate from './middleware.js/authenticate.js';
+import userRoutes from './routes/user.route.js';
 const app = express();
 
 app.use(express.json());
@@ -21,12 +23,17 @@ app.use(
     })
 );
 app.use(cookieParser());
+
 app.get('/',(req, res, next) => {
     return res.status(OK).json({
         status:"Healthy",
     });
 
-    });
+});
+
+// protected routes
+app.use('/user',authenticate, userRoutes);
+app.use('/sessions',authenticate, sessionRoutes);
 
 app.use('/auth',authRoutes);
 app.use(errorHandler);
