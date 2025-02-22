@@ -1,0 +1,16 @@
+// {
+//     "presets": ["@babel/preset-env"]
+//   }
+{
+  "presets": [
+    [
+      "@babel/preset-env",
+      {
+        "targets": {
+          "node": "current"  // This ensures compatibility with the current Node.js version
+        },
+        "modules": false  // This tells Babel to leave the `import`/`export` syntax intact (do not convert to `require`)
+      }
+    ]
+  ]
+}
